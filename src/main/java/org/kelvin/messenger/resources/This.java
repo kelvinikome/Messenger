@@ -3,11 +3,11 @@ package org.kelvin.messenger.resources;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
-@Path("/heys")
-public class Sample {
+@Path("/this")
+public class This {
 
 	@GET
-	public String sample() {
-		return "Sampleaaaaaaaaa";
+	public String th() { 
+		return "this";
 	}
 }
