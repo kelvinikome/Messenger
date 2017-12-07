@@ -16,7 +16,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.kelvin.messenger.model.Message;
@@ -24,7 +23,7 @@ import org.kelvin.messenger.resources.beans.MessageFilterBean;
 import org.kelvin.messenger.services.MessageService;
 
 @Path("/messages")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(value = {MediaType.APPLICATION_JSON, MediaType.TEXT_XML})
 @Consumes(MediaType.APPLICATION_JSON)
 public class MessageResource {
 
@@ -52,8 +51,41 @@ public class MessageResource {
 	
 	@GET
 	@Path("/{messageId}")
-	public Message getMessage(@PathParam("messageId") long id) {
-		return messageService.getMessage(id);
+	public Message getMessage(@PathParam("messageId") long id, @Context UriInfo uriInfo) {
+		Message message = messageService.getMessage(id);
+		message.addLink(getUriForSelf(uriInfo, message), "self");
+		message.addLink(getUriForProfile(uriInfo, message), "profile");
+		message.addLink(getUriForComment(uriInfo, message), "comments");
+		return message;
+	}
+
+	private String getUriForComment(UriInfo uriInfo, Message message) {
+		String uri = uriInfo.getBaseUriBuilder()
+				.path(MessageResource.class)
+				.path(MessageResource.class, "getCommentResource")
+				.path(CommentResource.class)
+				.resolveTemplate("messageId", message.getId())
+				.build()
+				.toString();
+		return uri.toString();
+	}
+
+	private String getUriForProfile(UriInfo uriInfo, Message message) {
+		String uri = uriInfo.getBaseUriBuilder()
+				.path(ProfileResource.class)
+				.path(message.getAuthor())
+				.build()
+				.toString();
+		return uri.toString();
+	}
+
+	private String getUriForSelf(UriInfo uriInfo, Message message) {
+		String uri = uriInfo.getBaseUriBuilder()
+							.path(MessageResource.class)
+							.path(Long.toString(message.getId()))
+							.build()
+							.toString();
+		return uri.toString();
 	}
 	
 	@PUT
@@ -70,7 +102,7 @@ public class MessageResource {
 	}
 
 	@Path("/{messageId}/comments")
-	public CommentResource comments() {
+	public CommentResource getCommentResource() {
 		return new CommentResource();
 	}
 
